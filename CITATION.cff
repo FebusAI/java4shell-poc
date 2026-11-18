@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: "FebusAI Java4Shell PoC (CVE-2026-114938)"
+message: "If you use this research code, please cite the repository."
+type: software
+authors:
+  - name: "FebusAI Security Research"
+repository-code: "https://github.com/febusai/java4shell-poc"
+keywords:
+  - CVE-2026-114938
+  - Java4Shell
+  - AVX-512 VBMI
+  - memory corruption
+  - OpenJDK
+license: MIT
+date-released: "2026-11-18"

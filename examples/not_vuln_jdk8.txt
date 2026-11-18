@@ -1,0 +1,41 @@
+# ESEMPIO: esito NON-vulnerabile su JVM JDK 8 (Wowza Manager 52.209.94.244:8088):
+# ATTACK-REPORT — Java4Shell vs Wowza live target
+
+**Target:** `http://52.209.94.244:8088/enginemanager/ftu/welcome.htm` (AWS eu-west-1, IP pubblico, attacco autorizzato dall'utente il 2026-11-18)
+
+## Esito
+
+**Exploit Java4Shell (CVE-2026-114938) eseguito: NON-VULNERABILE (negative result dimostrato, non assunto).**
+
+## Fingerprint
+
+| Elemento | Valore |
+|---|---|
+| App | Wowza Streaming Engine Manager (wowza.css, jsp FTU, RTMP 1935 aperto) |
+| Servlet | Winstone 1.0.5 (`net.winstone`, Servlet/2.5) |
+| JVM | **JDK 8** (era 8u191±) — prova: stacktrace server-side con line-number esatti JDK 8: `java.lang.Thread.run(Thread.java:745)`, `FutureTask.run(266)`, `Executors$RunnableAdapter.call(511)`, `ThreadPoolExecutor.runWorker(1142)` |
+| Decoder Basic | custom Winstone/Spring (pagine "Invalid basic authentication token"), non `java.util.Base64` |
+
+## Attacchi portati (tutti con trigger canonico + varianti)
+
+| # | Vettore | Payload | Risultato |
+|---|---|---|---|
+| 1 | `Authorization: Basic` → `/enginemanager/rest/` | `A×64+'='`, `A×63+='` | 401:296b "Invalid basic authentication token" — decoder raggiunto, comportamento identico al pulito |
+| 2 | Burst 300× malformed (same site) | `A×64+'='` | 300× 401:296 — **zero divergenza**; canary `login.htm` 200:8531 costante |
+| 3 | Variante old-JDK17 | `A×128+'='` | 401, nessuna anomalia |
+| 4 | Login FTU `POST /enginemanager/ftu/j_spring_security_check` (call-site freschi per classe) | password `A×64+='`, authType digest/basicAuth/basic | `signinfailed.htm` invariato, nessuna corruzione session/heap osservabile |
+| 5 | Valid token di controllo | `base64(admin:admin)` | 401:432b credenziali erruate ≠ 296b malformed → distingue i percorsi |
+
+## Perché non è vulnerabile (radice)
+
+L'intrinsic AVX-512 VBMI di `Base64` (stub `generate_base64_decodeBlock`, origine di CWE-122/CVE-2026-114938) **esiste solo da JDK 15+** (JDK-8237697). Su JDK 8 il decode Base64 è puro Java (`sun.misc.BASE64Decoder` / tabelle char[]): la store `evmovdqub` con mask underflow non viene mai emessa → **la write OOB 62-byte è strutturalmente impossibile**, indipendentemente dalla CPU. Nota: l'unico JDK 8 vulnerabile elencato in NOTES.md è il build sperimentale `8u511b33-perf`, non il build Oracle/Adoptium standard bundlato da Wowza 4.8.x.
+
+## Findings collaterali (registrati)
+
+1. **CWE-209 — Stacktrace disclosure** (low): errori 500/401 Winstone divulgano stacktrace Java completo (classi interne `com.wowza.wms.spring.*`, versione dipendenze Spring Security). CVSS 3.1 ~ 5.3 informativo→5.3? usare 5.3/low… mantenuto low.
+2. **FTU wizard esposto senza auth** (info): `ftu/signin.htm` accetta POST login → enumeration comportamentale (signinfailed vs NPE con authType mancante → fingerprint versione applicativo).
+3. **RTMP 1935** aperto (superficie aggiuntiva, non testata distruttivamente).
+
+## Reproduzione
+
+```bash
