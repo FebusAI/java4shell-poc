@@ -46,7 +46,6 @@ src/RemoteProbe.java     dependency-free remote applicability probe (JSONL + exi
 scripts/build.sh         compile everything (any JDK 17+)
 scripts/run_local.sh     full local chain: CPU gate → PoC → RCE → mitigation check
 scripts/probe_remote.sh  remote probe wrapper
-examples/                real captured outputs: winning RCE run + negative JDK-8 run
 SKILL.md                 decision tree + engagement rules for AI agents
 docs/ADVISORY.md         full technical writeup (geometry, one-shot semantics, evidence)
 ```
@@ -87,12 +86,12 @@ Eclipse Temurin **21.0.12+8** — a build *without* the JDK-8393212 guard.
    the attacker never sends an executable field. Signature present ⇒ heap
    forgery happened ⇒ `sh -c '<payload>'` runs ⇒ **RCE**.
 
-Captured output (`examples/rce_output.txt`):
+Captured output (v1.0.0 lab run):
 
 ```
 =============== RCE VERIFICATA ===============
 uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),...
-ip-172-31-42-24
+<target-hostname>
 tempo totale exploit: 0.15s
 ```
 
@@ -121,9 +120,9 @@ limitations).
 
 Start with [`SKILL.md`](SKILL.md): gates, commands, JSONL contract, exit codes,
 and two hard rules — *a Base64 4xx error page is not proof* (the decoder may be
-pure-Java) and *a stable probe is not proof of patch* (one-shot). The Wowza
-JDK-8 negative example in `examples/not_vuln_jdk8.txt` shows the fast path:
-one disclosed stack trace (`Thread.java:745`) settles applicability without any burst.
+pure-Java) and *a stable probe is not proof of patch* (one-shot). The fast path on a legacy
+stack: one disclosed stack trace (`Thread.java:745` → JDK 8) settles applicability
+without any burst (see ADVISORY §2).
 
 ## Disclosure & credits
 

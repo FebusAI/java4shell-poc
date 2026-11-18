@@ -55,7 +55,7 @@ CPU patch level is sufficient — verify the guard.
 
 ## 3. Demonstration (RCE)
 
-Environment: AWS `m6i.large`, `ap-south-1→us-east-1`, Ubuntu 24.04,
+Environment: AWS `m6i.large` (x86-64), Ubuntu 24.04,
 Temurin 21.0.12+8+LTS, CPU flags `avx512f avx512bw avx512vbmi bmi2`.
 
 Chain: groom (`dst byte[50]` + victim `byte[4096]` adjacent, single worker
@@ -66,7 +66,7 @@ escalates to `sh -c` → **command output from the target JVM**:
 ```
 rc=0
 uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),24(cdrom),27(sudo),30(dip),105(lxd)
-ip-172-31-42-24          # hostname of the JVM host
+<target-hostname>       # hostname of the JVM host
 ```
 
 Exploit wall-time: 0.15 s. Mitigation run (`-XX:-UseBASE64Intrinsics`, same

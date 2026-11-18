@@ -53,7 +53,7 @@ e una riga finale `{"summary":"ANOMALY|stable","jvmGuess":...,
 - NON dichiarare "patchato" dopo un probe stabile su JVM 17/21: la one-shot potrebbe essere
   già consumata. La prova di patch è il version/build check (JDK-8393212 `5177a70b`).
 
-## Interpretazione (lezione Wowza, esempio reale in examples/)
+## Interpretazione (lezione real-world, v1.0.0 lab)
 
 Stacktrace JDK8 esatti (`Thread.java:745`, `FutureTask:266`) = JVM bundlato vecchio →
 verdetto negativo in 1 richiesta, senza need di burst. Sempre *fingerprintare prima*,
